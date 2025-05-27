@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研修 Day2：データから「問い」を立て、実践的な仮説とアクションに繋げる</title>
+    <!-- Visualization & Content Choices:
+        - Case Study Text: Presented as HTML text. Goal: Provide context for the workshop. Interaction: Read. Justification: Standard way to present scenarios.
+        - User Input Textarea: HTML textarea. Goal: Allow users to input their questions/hypotheses. Interaction: Type. Justification: Standard for user text input.
+        - "Get AI Ideas" Button: HTML button. Goal: Trigger Gemini API call. Interaction: Click. Justification: Clear call to action.
+        - AI Response Area: HTML div. Goal: Display AI-generated suggestions. Interaction: Read. Justification: Standard for displaying dynamic text.
+        - Gemini API (gemini-2.0-flash): Used for text generation. Goal: Provide diverse perspectives and ideas based on user input. Interaction: API call (fetch). Justification: Enhances brainstorming and critical thinking for the workshop task.
+        - Loading Indicator: HTML text. Goal: Provide feedback during API call. Interaction: View. Justification: Improves UX.
+        - NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Meiryo, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
+            line-height: 1.8;
+            margin: 0;
+            padding: 0;
+            background-color: #FFF;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .slide {
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .slide h1, .slide h2, .slide h3, .slide h4 {
+            color: #464646;
+        }
+        .slide h1 {
+            font-size: 2.2em;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #464646;
+        }
+        .slide .subtitle {
+            font-size: 1.3em;
+            text-align: center;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .slide .slide-header {
+            font-size: 1.8em;
+            border-bottom: 2px solid #F08300;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+         .slide .slide-subheader {
+            font-size: 1.2em;
+            color: #F08300;
+            margin-top: -15px;
+            margin-bottom: 20px;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .icon {
+            margin-right: 8px;
+            color: #F08300;
+        }
+        .two-column-layout {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .two-column-layout > div {
+            flex: 1;
+            background-color: #FFF6E9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .two-column-layout h3 {
+            margin-top: 0;
+            color: #464646;
+            border-bottom: 1px solid #F08300;
+            padding-bottom: 5px;
+        }
+        .process-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .process-step .icon {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+        .process-step-arrow {
+            text-align: center;
+            font-size: 1.5em;
+            color: #F08300;
+            margin: -5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .note {
+            font-size: 0.9em;
+            color: #555;
+            background-color: #FFF6E9;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #F08300;
+        }
+        .highlight {
+            background-color: #FFF6E9;
+            color: #F08300;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .center-text {
+            text-align: center;
+        }
+        blockquote {
+            margin: 15px 0;
+            padding: 10px 15px;
+            background: #f0f0f0;
+            border-left: 5px solid #ccc;
+            font-style: italic;
+        }
+        .gemini-interaction-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px dashed #F08300;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .gemini-interaction-section h4 {
+            margin-top: 0;
+            color: #F08300;
+        }
+        .gemini-interaction-section textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .gemini-interaction-section button {
+            background-color: #F08300;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .gemini-interaction-section button:hover {
+            background-color: #d47500;
+        }
+        #geminiResponseArea {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #eee;
+            white-space: pre-wrap; /* To preserve line breaks from AI response */
+        }
+        #loadingIndicator {
+            display: none;
+            margin-top: 10px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div class="slide">
+            <h1>カスタマーマーケティングチーム向け<br>KGI・KPI設定およびデータ活用力向上研修</h1>
+            <p class="subtitle">Day2：データから「問い」を立て、実践的な仮説とアクションに繋げる</p>
+            <p class="center-text">[研修実施日]</p>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-header">本日の進め方とゴール (Day2)</h2>
+            <h3><span class="icon">⏱️</span>タイムスケジュール</h3>
+            <ul>
+                <li>15分: Day1の振り返り＆Day2のゴール設定</li>
+                <li>25分: 講義2：データから「問い」を見つけ、仮説を立てる実践的ステップ</li>
+                <li>40分: ワーク2：身近なデータから「問い」を立て、仮説とアクションを具体化する</li>
+                <li>10分: まとめとアクションプラン作成</li>
+            </ul>
+            <h3><span class="icon">🎯</span>本日のゴール</h3>
+            <ul>
+                <li>データを見て「なぜ？」という<strong>問い</strong>を立てるスキルを身につける。</li>
+                <li>「問い」を具体的な<strong>仮説</strong>と<strong>検証アクション</strong>に変換するプロセスを体感する。</li>
+                <li>研修で学んだ思考法を、明日からの業務で試すための具体的な一歩を見つける。</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-header">Day1の振り返りと皆さんの声</h2>
+            <div class="two-column-layout">
+                <div>
+                    <h3><span class="icon">🔍</span>Day1の重要ポイント (おさらい)</h3>
+                    <ul>
+                        <li>KGIは「目的地」</li>
+                        <li>CSFは「重要ルート」</li>
+                        <li>KPIは「計器」</li>
+                        <li>常に「なぜこのKPIを追うのか？」とKGI/CSFとの繋がりを意識することが重要。</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3><span class="icon">📣</span>Day1アンケートからの声</h3>
+                    <blockquote>「データから仮説を立てる術を身につけたい」</blockquote>
+                    <blockquote>「データの読み方を具体的に知りたい」</blockquote>
+                    <blockquote>「インプットとアウトプットの接続がまだまだだと感じた」</blockquote>
+                </div>
+            </div>
+            <p class="note" style="margin-top: 20px;"><strong>ありがとうございます！</strong> Day2では、まさにこの「データ→仮説→アクション」という接続部分を、皆で一緒に実践していきましょう！</p>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-header">データから「問い」を見つけ、仮説を立てる実践的ステップ</h2>
+            <p class="slide-subheader">～「なぜ？」を武器に、成果に繋がるアクションを生み出す～</p>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-header">仮説構築へのよくある誤解</h2>
+            <h3>誤解1：「特別な分析スキルやツールが必要だ」</h3>
+            <p>→ <span class="highlight">いいえ！</span> まずはExcelやスプレッドシートで十分。大事なのはツールより<strong>「見方」</strong>と<strong>「考え方」</strong>です。</p>
+            <h3>誤解2：「最初から完璧な仮説を立てなければならない」</h3>
+            <p>→ <span class="highlight">いいえ！</span> 仮説は「仮の説」。間違うことを恐れず、たくさん立てて検証・修正していくことが重要です。</p>
+            <div class="note" style="margin-top:20px;">
+                <strong>アンケートの声より：</strong> 「何から手をつければいいか分からない」「自分の考えが合っているか不安」<br>
+                →その気持ち、よく分かります。今日はその不安を解消するための、シンプルな最初のステップを学びます。
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-header">仮説構築の超基本ステップ</h2>
+            <div class="process-step">
+                <div class="icon">🧐</div>
+                <div>
+                    <h3>Step1: 観察する (Observe)</h3>
+                    <p>データを素直に眺める。「へぇ、こうなってるんだ」と事実を認識する。</p>
+                </div>
+            </div>
+            <div class="process-step-arrow">↓</div>
+            <div class="process-step">
+                <div class="icon">❓</div>
+                <div>
+                    <h3>Step2: 「問い」を立てる (Question)</h3>
+                    <p>観察した事実に対して「なぜこうなってるの？」「これってつまりどういうこと？」と疑問を持つ。<strong>ここが最も重要！</strong></p>
+                </div>
+            </div>
+            <div class="process-step-arrow">↓</div>
+            <div class="process-step">
+                <div class="icon">💡</div>
+                <div>
+                    <h3>Step3: 仮説を立てる (Hypothesize)</h3>
+                    <p>「問い」に対する仮の答えを「もし～ならば、～なのではないか？」の形で言語化する。</p>
+                </div>
+            </div>
+            <div class="process-step-arrow">↓</div>
+            <div class="process-step">
+                <div class="icon">✅</div>
+                <div>
+                    <h3>Step4: 検証する (Verify)</h3>
+                    <p>その仮説が正しいか、どうすれば確かめられるかを考える。（次のアクション）</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-header">ミニデモ：「メルマガ開封率」データで実践！</h2>
+            <h3>Step1: 観察する</h3>
+            <p>「ここに、メルマガ配信結果のシンプルなデータがあります。」</p>
+            <table>
+                <thead><tr><th>配信日</th><th>曜日</th><th>配信時間</th><th>件名</th><th>開封率</th></tr></thead>
+                <tbody>
+                    <tr><td>5/19</td><td>月</td><td>18:00</td><td>【新機能】●●のご案内</td><td>15%</td></tr>
+                    <tr><td>5/21</td><td>水</td><td>12:00</td><td>【活用事例】株式会社△△様</td><td>25%</td></tr>
+                    <tr><td>5/23</td><td>金</td><td>18:00</td><td>【セミナー】来週開催！</td><td>18%</td></tr>
+                    <tr><td>5/26</td><td>月</td><td>12:00</td><td>【新機能】××のご案内</td><td>22%</td></tr>
+                </tbody>
+            </table>
+            <ul>
+                <li>気づき1: 水曜日や月曜日の12時配信は、18時配信より開封率が高いな。</li>
+                <li>気づき2: 件名が【活用事例】の時が一番開封率が高いな。</li>
+            </ul>
+            <hr style="margin:20px 0;">
+            <h3>Step2: 「問い」を立てる</h3>
+            <ul>
+                <li>問い1: なぜ、12時配信の方が開封率が高いのだろう？</li>
+                <li>問い2: なぜ、【活用事例】は他の件名より開封されるのだろう？</li>
+            </ul>
+            <hr style="margin:20px 0;">
+            <h3>Step3 & 4: 仮説を立て、検証アクションを考える</h3>
+            <p><strong>問い1に対して：</strong></p>
+            <p><strong>仮説：</strong>「<span class="highlight">もし、</span>多くの顧客がお昼休みにメールをチェックしている<span class="highlight">ならば、</span>18時より12時に配信した方が開封率が高くなる<span class="highlight">のではないか？</span>」</p>
+            <p><strong>検証アクション：</strong> 同じ内容のメールを、12時と18時に分けて配信し、開封率を比較してみよう（A/Bテスト）。</p>
+            <br>
+            <p><strong>問い2に対して：</strong></p>
+            <p><strong>仮説：</strong>「<span class="highlight">もし、</span>顧客は機能紹介より他社の成功事例に興味がある<span class="highlight">ならば、</span>【活用事例】という件名の方が開封率が高くなる<span class="highlight">のではないか？</span>」</p>
+            <p><strong>検証アクション：</strong> 新機能紹介メールの件名を【活用事例風】にして、開封率が上がるか試してみよう。</p>
+            <p class="note" style="margin-top:20px;">この「問い→仮説」のプロセスこそが、データ活用の心臓部です！</p>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-header">ワーク2：データから「問い」を立て、仮説とアクションを創る</h2>
+            <p class="slide-subheader">～チームで実践！私たちの「なぜ？」を成果に繋げよう～</p>
+            <p class="center-text"><strong>所要時間:</strong> グループワーク 35分 / 発表・FB 5分</p>
+            <h3>目的：</h3>
+            <ul>
+                <li>身近なデータや課題を元に、グループで「問い」を立てる練習をする。</li>
+                <li>「問い」を具体的な「仮説」と「ネクストアクション」に変換するプロセスを実践する。</li>
+                <li>チームでの仮説構築の楽しさとパワフルさを体感する。</li>
+            </ul>
+            <p class="note"><strong>配布物:</strong> ケーススタディ資料（シンプル版）＆ワークシート（改訂版）</p>
+        </div>
+
+        <div class="slide" id="slide-case-study-summary">
+            <h2 class="slide-header">ケーススタディの概要</h2>
+            <h3>シナリオ</h3>
+            <p>ある機能（機能A）の利用率向上がチームのKPIです。しかし、オンボーディングを完了した顧客の中でも、機能Aを全く使っていない顧客が半数以上いることが分かりました。</p>
+            <h3>提示データ</h3>
+            <div class="two-column-layout">
+                <div>
+                    <h4>データ1：顧客の職種別 機能Aの利用率</h4>
+                    <table>
+                        <thead><tr><th>職種</th><th>利用率</th></tr></thead>
+                        <tbody>
+                            <tr><td>営業</td><td>65%</td></tr>
+                            <tr><td>マーケティング</td><td>25%</td></tr>
+                            <tr><td>開発</td><td>15%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h4>データ2：機能Aに関するサポートへの問い合わせ内容</h4>
+                    <ul>
+                        <li>設定方法が分からない: 50%</li>
+                        <li>自社のどの業務で使えるか分からない: 40%</li>
+                        <li>エラーが出る: 10%</li>
+                    </ul>
+                </div>
+            </div>
+            <hr style="margin:20px 0;">
+            <h3>お題</h3>
+            <p>この状況を踏まえ、機能Aの利用率が低い背景にある<span class="highlight">「問い」</span>と<span class="highlight">「仮説」</span>を立て、利用率を向上させるための<span class="highlight">具体的なアクションプラン</span>を考えてください。</p>
+
+            <div class="gemini-interaction-section">
+                <h4>✨ AIにアイデアの壁打ちを手伝ってもらおう！</h4>
+                <p>グループワークで出てきた「問い」や「仮説」、または「アクションプランのアイデア」などを入力して、AIからさらに多様な視点や深掘りのヒントをもらいましょう。</p>
+                <textarea id="userInputQuery" placeholder="例：なぜマーケティング職の機能A利用率が低いのか？"></textarea>
+                <button id="geminiApiButton">AIにアイデアをもらう</button>
+                <div id="loadingIndicator">AIが考え中です...</div>
+                <div id="geminiResponseArea"></div>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <h2 class="slide-header">Day2の振り返り - 学びのポイント</h2>
+            <ul>
+                <li>データ活用の第一歩は、スキルやツールよりも<strong>「なぜ？」という「問い」</strong>を持つこと。</li>
+                <li>「問い」は<strong>「もし～ならば、～では？」</strong>という具体的な「仮説」に変換できる。</li>
+                <li>仮説は、<strong>明日から試せる小さな「アクション」</strong>に繋げることで価値が生まれる。</li>
+                <li>完璧な仮説より、チームでたくさん仮説を出し、高速で検証・学習することが重要。</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-header">明日からのアクションプランを立てよう！</h2>
+            <p>2日間の研修、本当にお疲れ様でした！最後に、この学びを業務に活かすための一歩を宣言しましょう。</p>
+            <p><strong>個人ワーク (5分):</strong></p>
+            <p>アクションプランシートに、特に以下の点を意識して記入してください。</p>
+            <ul>
+                <li>身近なデータ（日報、顧客からのメールなど）を見て、「なぜ？」と問いを立ててみる。</li>
+                <li>チームのMTGで、自分の意見を「仮説」として話してみる。</li>
+            </ul>
+            <p class="note" style="margin-top:20px;"><strong>クロージングメッセージ：</strong> この研修はゴールではなく、スタートです。今日学んだ「戦略の視点」と「仮説思考」を武器に、皆さんが日々の業務でさらに活躍されることを心から応援しています！</p>
+        </div>
+
+        <div class="slide" style="background-color: #FFF6E9;">
+            <h2 class="slide-header" style="text-align:center; border-bottom:none;">ご清聴ありがとうございました</h2>
+            <p class="center-text" style="font-size:1.2em;">2日間の研修、お疲れ様でした！</p>
+        </div>
+    </div>
+
+    <script>
+        const geminiApiButton = document.getElementById('geminiApiButton');
+        const userInputQuery = document.getElementById('userInputQuery');
+        const geminiResponseArea = document.getElementById('geminiResponseArea');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        geminiApiButton.addEventListener('click', async () => {
+            const userQuery = userInputQuery.value.trim();
+            if (!userQuery) {
+                geminiResponseArea.textContent = '何か「問い」や「仮説」を入力してください。';
+                return;
+            }
+
+            loadingIndicator.style.display = 'block';
+            geminiResponseArea.textContent = '';
+            geminiApiButton.disabled = true;
+
+            const prompt = `あなたは優秀なビジネスコンサルタントです。以下の研修のケーススタディとユーザーの「問い」または「仮説」を読んで、その思考を深めるためのアイデアを3つ提案してください。アイデアは、追加の問い、別の視点からの仮説、または具体的な検証アクションのいずれかの形式で、簡潔かつ具体的に記述してください。
+
+研修ケーススタディの概要：
+ある機能（機能A）の利用率向上がチームのKPIです。オンボーディング完了顧客の中でも、機能Aを全く使っていない顧客が半数以上います。
+データ1：顧客の職種別 機能Aの利用率 - 営業:65%, マーケティング:25%, 開発:15%
+データ2：機能Aに関するサポートへの問い合わせ内容 - 設定方法が分からない:50%, 自社のどの業務で使えるか分からない:40%, エラーが出る:10%
+
+ユーザーの「問い」または「仮説」：
+${userQuery}
+
+提案するアイデア（3つ）：
+1. [アイデア1]
+2. [アイデア2]
+3. [アイデア3]
+`;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('API Error:', errorData);
+                    throw new Error(`APIリクエストに失敗しました。ステータス: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    geminiResponseArea.textContent = text;
+                } else {
+                    console.error('Unexpected API response structure:', result);
+                    geminiResponseArea.textContent = 'AIからの応答が期待される形式ではありませんでした。';
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                geminiResponseArea.textContent = `エラーが発生しました：${error.message} (詳細はコンソールを確認してください)`;
+            } finally {
+                loadingIndicator.style.display = 'none';
+                geminiApiButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
